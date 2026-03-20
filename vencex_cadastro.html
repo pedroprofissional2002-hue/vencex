@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VENCEX — Criar Conta</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --orange: #ff6a00;
+  --orange-glow: 0 0 20px rgba(255,106,0,0.6), 0 0 60px rgba(255,106,0,0.2);
+  --orange-glow-sm: 0 0 10px rgba(255,106,0,0.5);
+  --text: #e8e8e8;
+  --text-dim: #888;
+  --glass-border: rgba(255,106,0,0.25);
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { width: 100%; min-height: 100%; background: #000; color: var(--text); font-family: 'Rajdhani', sans-serif; }
+
+#bg-canvas { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+.grid-overlay {
+  position: fixed; inset: 0; z-index: 1; pointer-events: none;
+  background-image: linear-gradient(rgba(255,106,0,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,106,0,0.05) 1px, transparent 1px);
+  background-size: 60px 60px;
+  animation: gridDrift 20s linear infinite;
+}
+@keyframes gridDrift { 0% { background-position: 0 0; } 100% { background-position: 60px 60px; } }
+.scanline { position: fixed; inset: 0; z-index: 2; pointer-events: none; background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.03) 2px, rgba(0,0,0,0.03) 4px); }
+
+.page-wrap {
+  position: relative; z-index: 10;
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  padding: 40px 20px;
+}
+
+.card {
+  background: rgba(10,10,10,0.88);
+  backdrop-filter: blur(24px);
+  border: 1px solid var(--glass-border);
+  border-radius: 4px;
+  padding: 52px 48px;
+  width: 440px; max-width: 96vw;
+  position: relative;
+  box-shadow: 0 0 80px rgba(255,106,0,0.07);
+}
+.card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, var(--orange), transparent); }
+
+.corner { position: absolute; width: 12px; height: 12px; border-color: var(--orange); border-style: solid; opacity: 0.6; }
+.corner.tl { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+.corner.tr { top: -1px; right: -1px; border-width: 2px 2px 0 0; }
+.corner.bl { bottom: -1px; left: -1px; border-width: 0 0 2px 2px; }
+.corner.br { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+.logo {
+  font-family: 'Orbitron', monospace;
+  font-size: 2.2rem; font-weight: 900;
+  letter-spacing: 0.35em;
+  color: var(--orange);
+  text-shadow: var(--orange-glow);
+  text-align: center;
+  margin-bottom: 4px;
+  animation: pulse 2s ease-in-out infinite;
+}
+@keyframes pulse { 0%,100%{text-shadow:var(--orange-glow);}50%{text-shadow:0 0 40px rgba(255,106,0,1),0 0 100px rgba(255,106,0,0.4);} }
+
+.subtitle {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem; letter-spacing: 0.2em;
+  color: var(--text-dim); text-align: center;
+  margin-bottom: 36px;
+}
+
+/* Steps */
+.step { display: none; }
+.step.active { display: block; }
+
+.step-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem; letter-spacing: 0.2em;
+  color: rgba(255,106,0,0.5);
+  margin-bottom: 20px;
+  display: flex; align-items: center; gap: 10px;
+}
+.step-label::after { content: ''; flex: 1; height: 1px; background: rgba(255,106,0,0.15); }
+
+.field-group { margin-bottom: 18px; }
+.field-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.62rem; letter-spacing: 0.18em;
+  color: var(--orange); display: block; margin-bottom: 8px; opacity: 0.8;
+}
+.field-input {
+  width: 100%;
+  background: rgba(255,106,0,0.04);
+  border: 1px solid rgba(255,106,0,0.2);
+  border-radius: 2px;
+  padding: 12px 16px;
+  color: var(--text);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.85rem;
+  outline: none; transition: all 0.3s;
+}
+.field-input::placeholder { color: rgba(255,255,255,0.2); }
+.field-input:focus { border-color: var(--orange); background: rgba(255,106,0,0.07); box-shadow: var(--orange-glow-sm); }
+.field-input.error { border-color: #ff4444; }
+
+.btn {
+  width: 100%;
+  background: linear-gradient(135deg, #ff6a00, #e05200);
+  border: none; border-radius: 2px;
+  padding: 14px;
+  color: #000;
+  font-family: 'Orbitron', monospace;
+  font-size: 0.75rem; font-weight: 700;
+  letter-spacing: 0.25em;
+  cursor: pointer;
+  transition: all 0.3s;
+  box-shadow: 0 4px 20px rgba(255,106,0,0.3);
+  margin-top: 8px;
+}
+.btn:hover { transform: translateY(-1px); box-shadow: var(--orange-glow); }
+.btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.btn-ghost {
+  width: 100%; background: none;
+  border: 1px solid rgba(255,106,0,0.25);
+  border-radius: 2px; padding: 10px;
+  color: var(--text-dim);
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.62rem; letter-spacing: 0.15em;
+  cursor: pointer; transition: all 0.25s;
+  margin-top: 10px;
+}
+.btn-ghost:hover { border-color: var(--orange); color: var(--orange); }
+
+/* Alert boxes */
+.alert {
+  border-radius: 2px; padding: 14px 16px; margin-bottom: 18px;
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.68rem; letter-spacing: 0.08em;
+  line-height: 1.6; display: none;
+}
+.alert.show { display: block; }
+.alert.error { background: rgba(255,68,68,0.08); border: 1px solid rgba(255,68,68,0.3); color: #ff6666; }
+.alert.success { background: rgba(0,255,136,0.06); border: 1px solid rgba(0,255,136,0.25); color: #00ff88; }
+.alert.info { background: rgba(255,106,0,0.06); border: 1px solid rgba(255,106,0,0.2); color: var(--orange); }
+
+/* Membership badge */
+.mb-badge {
+  display: flex; align-items: center; gap: 10px;
+  background: rgba(0,255,136,0.05);
+  border: 1px solid rgba(0,255,136,0.2);
+  border-radius: 2px; padding: 12px 16px;
+  margin-bottom: 20px;
+}
+.mb-dot { width: 8px; height: 8px; border-radius: 50%; background: #00ff88; box-shadow: 0 0 8px #00ff88; animation: pulse-dot 1.5s infinite; flex-shrink: 0; }
+@keyframes pulse-dot { 0%,100%{opacity:1;}50%{opacity:0.4;} }
+.mb-text { font-family: 'Share Tech Mono', monospace; font-size: 0.62rem; letter-spacing: 0.1em; color: #00ff88; }
+.mb-plan { color: rgba(0,255,136,0.6); font-size: 0.58rem; margin-top: 2px; }
+
+/* Loading spinner */
+.spinner {
+  display: inline-block; width: 14px; height: 14px;
+  border: 2px solid rgba(0,0,0,0.3);
+  border-top-color: #000;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  vertical-align: middle; margin-right: 8px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Success screen */
+.success-icon {
+  width: 64px; height: 64px;
+  background: rgba(0,255,136,0.1);
+  border: 2px solid rgba(0,255,136,0.3);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  margin: 0 auto 20px;
+  font-size: 1.8rem;
+}
+.success-title {
+  font-family: 'Orbitron', monospace;
+  font-size: 1rem; font-weight: 700;
+  color: #00ff88; text-align: center;
+  margin-bottom: 12px; letter-spacing: 0.08em;
+}
+.success-msg {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.68rem; letter-spacing: 0.08em;
+  color: var(--text-dim); text-align: center;
+  line-height: 1.8;
+}
+.success-msg strong { color: var(--orange); }
+
+.footer-link {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.6rem; letter-spacing: 0.1em;
+  color: var(--text-dim); text-align: center;
+  margin-top: 20px;
+}
+.footer-link a { color: var(--orange); text-decoration: none; }
+.footer-link a:hover { text-shadow: var(--orange-glow-sm); }
+
+.status-bar {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 0.58rem; letter-spacing: 0.12em;
+  color: var(--text-dim); text-align: center;
+  margin-top: 20px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.status-dot-sm { width: 5px; height: 5px; border-radius: 50%; background: var(--orange); box-shadow: var(--orange-glow-sm); animation: pulse-dot 2s infinite; }
+</style>
+</head>
+<body>
+
+<canvas id="bg-canvas"></canvas>
+<div class="grid-overlay"></div>
+<div class="scanline"></div>
+
+<div class="page-wrap">
+  <div class="card">
+    <div class="corner tl"></div><div class="corner tr"></div>
+    <div class="corner bl"></div><div class="corner br"></div>
+
+    <div class="logo">VENCEX</div>
+    <div class="subtitle">// CRIAÇÃO DE ACESSO</div>
+
+    <!-- STEP 1: Verificar email -->
+    <div class="step active" id="step-1">
+      <div class="step-label">PASSO 1 — VERIFICAR EMAIL</div>
+
+      <div class="alert error" id="alert-1"></div>
+
+      <div class="field-group">
+        <label class="field-label">// SEU EMAIL DE COMPRA</label>
+        <input type="email" class="field-input" id="email-input"
+          placeholder="email@usado.na.compra.com"
+          onkeydown="if(event.key==='Enter')checkEmail()">
+      </div>
+
+      <button class="btn" id="btn-check" onclick="checkEmail()">VERIFICAR EMAIL</button>
+
+      <div class="footer-link" style="margin-top:16px;">
+        Já tem conta? <a href="vencex_final.html">Fazer login →</a>
+      </div>
+    </div>
+
+    <!-- STEP 2: Criar senha -->
+    <div class="step" id="step-2">
+      <div class="step-label">PASSO 2 — CRIAR SENHA</div>
+
+      <div class="mb-badge">
+        <div class="mb-dot"></div>
+        <div>
+          <div class="mb-text">COMPRA VERIFICADA ✓</div>
+          <div class="mb-plan" id="plan-label"></div>
+        </div>
+      </div>
+
+      <div class="alert error" id="alert-2"></div>
+
+      <div class="field-group">
+        <label class="field-label">// EMAIL CONFIRMADO</label>
+        <input type="email" class="field-input" id="email-confirmed" disabled style="opacity:0.5;">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">// NOME COMPLETO</label>
+        <input type="text" class="field-input" id="name-input" placeholder="Seu nome completo">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">// CRIAR SENHA (mín. 6 caracteres)</label>
+        <input type="password" class="field-input" id="pass-input" placeholder="••••••••••"
+          onkeydown="if(event.key==='Enter')createAccount()">
+      </div>
+
+      <div class="field-group">
+        <label class="field-label">// CONFIRMAR SENHA</label>
+        <input type="password" class="field-input" id="pass-confirm" placeholder="••••••••••"
+          onkeydown="if(event.key==='Enter')createAccount()">
+      </div>
+
+      <button class="btn" id="btn-register" onclick="createAccount()">CRIAR MINHA CONTA</button>
+      <button class="btn-ghost" onclick="goBack()">← VOLTAR</button>
+    </div>
+
+    <!-- STEP 3: Sucesso -->
+    <div class="step" id="step-3">
+      <div class="success-icon">✓</div>
+      <div class="success-title">ACESSO LIBERADO</div>
+      <div class="success-msg">
+        Sua conta foi criada com sucesso!<br><br>
+        Enviamos um email para <strong id="success-email"></strong><br>
+        com o link de acesso direto.<br><br>
+        Ou clique abaixo para fazer login agora.
+      </div>
+      <button class="btn" style="margin-top:28px;" onclick="window.location.href='vencex_final.html'">
+        IR PARA O LOGIN →
+      </button>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-dot-sm"></div>
+      VENCEX v2.4.1 — SISTEMA SEGURO
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<script>
+// ── CONFIG ────────────────────────────────────────────────
+const API          = 'https://jujyexeyanahezwpgflb.supabase.co/functions/v1/vencex-check-membership';
+const SUPABASE_URL = 'https://jujyexeyanahezwpgflb.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1anlleGV5YW5haGV6d3BnZmxiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMjQ5MjAsImV4cCI6MjA4OTYwMDkyMH0._mC7H7yNF3gX-8iQZFAtJzSsHandYJMRS69V7giXmME';
+const sb           = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+let verifiedEmail = '';
+let verifiedPlan  = '';
+let verifiedPass  = '';
+
+// ── CANVAS ────────────────────────────────────────────────
+const canvas = document.getElementById('bg-canvas');
+const ctx = canvas.getContext('2d');
+let W, H, particles = [];
+function resize(){ W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; }
+resize(); window.addEventListener('resize', resize);
+class P { constructor(){ this.reset(); } reset(){ this.x=Math.random()*W; this.y=Math.random()*H; this.size=Math.random()*1.2+0.3; this.vx=(Math.random()-.5)*.3; this.vy=(Math.random()-.5)*.3; this.alpha=0; this.d=Math.random()*.015+.004; this.up=true; } update(){ this.x+=this.vx; this.y+=this.vy; if(this.up){this.alpha+=this.d;if(this.alpha>=.35)this.up=false;}else{this.alpha-=this.d*.5;if(this.alpha<=0)this.reset();} if(this.x<0||this.x>W||this.y<0||this.y>H)this.reset(); } draw(){ ctx.beginPath(); ctx.arc(this.x,this.y,this.size,0,Math.PI*2); ctx.fillStyle=`rgba(255,106,0,${this.alpha})`; ctx.fill(); } }
+for(let i=0;i<70;i++) particles.push(new P());
+(function loop(){ ctx.clearRect(0,0,W,H); particles.forEach(p=>{p.update();p.draw();}); requestAnimationFrame(loop); })();
+
+// ── HELPERS ───────────────────────────────────────────────
+function showAlert(id, msg){ const el=document.getElementById(id); el.textContent=msg; el.className='alert error show'; }
+function hideAlert(id){ const el=document.getElementById(id); el.className='alert error'; }
+function setLoading(btnId, loading, text){ const b=document.getElementById(btnId); b.disabled=loading; b.innerHTML=loading?`<span class="spinner"></span>${text}...`:text; }
+function showStep(n){ document.querySelectorAll('.step').forEach(s=>s.classList.remove('active')); document.getElementById('step-'+n).classList.add('active'); }
+
+// ── STEP 1: Verificar email ───────────────────────────────
+async function checkEmail() {
+  const email = document.getElementById('email-input').value.trim();
+  hideAlert('alert-1');
+
+  if (!email || !email.includes('@')) {
+    showAlert('alert-1', 'Digite um email válido.');
+    return;
+  }
+
+  setLoading('btn-check', true, 'VERIFICANDO');
+
+  try {
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'check', email }),
+    });
+    const data = await res.json();
+
+    if (!data.allowed) {
+      showAlert('alert-1', '⚠ Este email não possui uma compra ativa no sistema VENCEX.');
+      setLoading('btn-check', false, 'VERIFICAR EMAIL');
+      return;
+    }
+
+    if (data.already_registered) {
+      showAlert('alert-1', 'Este email já possui uma conta. Use a tela de login.');
+      setLoading('btn-check', false, 'VERIFICAR EMAIL');
+      return;
+    }
+
+    // Email aprovado — ir para step 2
+    verifiedEmail = email.toLowerCase().trim();
+    verifiedPlan  = data.plan || 'premium';
+
+    document.getElementById('email-confirmed').value = verifiedEmail;
+    document.getElementById('plan-label').textContent = 'PLANO: ' + verifiedPlan.toUpperCase().replace(/_/g,' ');
+
+    showStep(2);
+
+  } catch(e) {
+    showAlert('alert-1', 'Erro de conexão. Tente novamente.');
+  }
+
+  setLoading('btn-check', false, 'VERIFICAR EMAIL');
+}
+
+// ── STEP 2: Criar conta ───────────────────────────────────
+async function createAccount() {
+  const name    = document.getElementById('name-input').value.trim();
+  const pass    = document.getElementById('pass-input').value;
+  const confirm = document.getElementById('pass-confirm').value;
+  hideAlert('alert-2');
+
+  if (!name) { showAlert('alert-2', 'Digite seu nome completo.'); return; }
+  if (pass.length < 6) { showAlert('alert-2', 'A senha deve ter no mínimo 6 caracteres.'); return; }
+  if (pass !== confirm) { showAlert('alert-2', 'As senhas não coincidem.'); return; }
+
+  setLoading('btn-register', true, 'CRIANDO CONTA');
+
+  try {
+    // 1. Criar conta via Edge Function
+    const res = await fetch(API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'register', email: verifiedEmail, password: pass, name }),
+    });
+    const data = await res.json();
+
+    if (!res.ok || data.error) {
+      showAlert('alert-2', data.error || 'Erro ao criar conta. Tente novamente.');
+      setLoading('btn-register', false, 'CRIAR MINHA CONTA');
+      return;
+    }
+
+    // 2. Fazer login automático com a senha recém criada
+    setLoading('btn-register', true, 'ENTRANDO NO SISTEMA');
+    const { error: loginErr } = await sb.auth.signInWithPassword({
+      email: verifiedEmail,
+      password: pass,
+    });
+
+    if (loginErr) {
+      // Login falhou mas conta foi criada — mostra step 3 para ir ao login manual
+      document.getElementById('success-email').textContent = verifiedEmail;
+      showStep(3);
+      return;
+    }
+
+    // 3. Login OK — redirecionar direto para o dashboard
+    window.location.href = 'vencex_final.html';
+
+  } catch(e) {
+    showAlert('alert-2', 'Erro de conexão. Tente novamente.');
+    setLoading('btn-register', false, 'CRIAR MINHA CONTA');
+  }
+}
+
+function goBack() { showStep(1); }
+</script>
+</body>
+</html>
