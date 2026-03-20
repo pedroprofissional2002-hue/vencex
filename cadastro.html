@@ -243,7 +243,7 @@ html, body { width: 100%; min-height: 100%; background: #000; color: var(--text)
       <button class="btn" id="btn-check" onclick="checkEmail()">VERIFICAR EMAIL</button>
 
       <div class="footer-link" style="margin-top:16px;">
-        Já tem conta? <a href="vencex_final.html">Fazer login →</a>
+        Já tem conta? <a href="index.html">Fazer login →</a>
       </div>
     </div>
 
@@ -297,7 +297,7 @@ html, body { width: 100%; min-height: 100%; background: #000; color: var(--text)
         com o link de acesso direto.<br><br>
         Ou clique abaixo para fazer login agora.
       </div>
-      <button class="btn" style="margin-top:28px;" onclick="window.location.href='vencex_final.html'">
+      <button class="btn" style="margin-top:28px;" onclick="window.location.href='index.html'">
         IR PARA O LOGIN →
       </button>
     </div>
@@ -428,7 +428,7 @@ async function createAccount() {
     }
 
     // 3. Login OK — redirecionar direto para o dashboard
-    window.location.href = 'vencex_final.html';
+    window.location.href = 'index.html';
 
   } catch(e) {
     showAlert('alert-2', 'Erro de conexão. Tente novamente.');
