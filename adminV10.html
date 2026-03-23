@@ -1,0 +1,869 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VENCEX Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@700;900&family=Rajdhani:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:#050505;color:#e8e8e8;font-family:'Rajdhani',sans-serif;}
+:root{--o:#ff6a00;--od:rgba(255,106,0,.12);--og:0 0 20px rgba(255,106,0,.5);--ogs:0 0 8px rgba(255,106,0,.4);--gb:rgba(255,106,0,.2);--td:#666;--red:#f44;--green:#0f8;}
+
+/* LOGIN */
+#s-login{position:fixed;inset:0;z-index:99;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:0;}
+.ll{font-family:'Orbitron',monospace;font-size:2rem;font-weight:900;letter-spacing:.35em;color:var(--o);text-shadow:var(--og);margin-bottom:6px;}
+.ls{font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.2em;color:#444;margin-bottom:28px;}
+.lc{background:rgba(10,10,10,.96);border:1px solid rgba(255,106,0,.25);border-radius:4px;padding:38px 42px;width:380px;max-width:94vw;position:relative;}
+.lc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--o),transparent);}
+#lerr{display:none;background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.3);border-radius:2px;padding:10px 12px;margin-bottom:14px;font-family:'Share Tech Mono',monospace;font-size:.62rem;color:#f66;}
+.fg{margin-bottom:14px;}
+.fl{font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.18em;color:var(--o);display:block;margin-bottom:6px;opacity:.8;}
+.fi{width:100%;background:rgba(255,106,0,.04);border:1px solid rgba(255,106,0,.2);border-radius:2px;padding:10px 13px;color:#e8e8e8;font-family:'Share Tech Mono',monospace;font-size:.8rem;outline:none;transition:border-color .3s;}
+.fi:focus{border-color:var(--o);}
+#lbtn{width:100%;background:linear-gradient(135deg,var(--o),#e05200);border:none;border-radius:2px;padding:12px;color:#000;font-family:'Orbitron',monospace;font-size:.72rem;font-weight:700;letter-spacing:.25em;cursor:pointer;margin-top:4px;transition:all .25s;}
+#lbtn:hover{box-shadow:var(--og);}#lbtn:disabled{opacity:.5;cursor:not-allowed;}
+
+/* APP */
+#s-app{display:none;height:100vh;flex-direction:row;}
+
+/* SIDEBAR */
+.sb{width:220px;min-width:220px;background:rgba(5,5,5,.98);border-right:1px solid var(--gb);display:flex;flex-direction:column;height:100vh;}
+.sblogo{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:900;letter-spacing:.3em;color:var(--o);text-shadow:var(--ogs);padding:20px 20px 16px;border-bottom:1px solid var(--gb);}
+.sblogo span{display:block;font-size:.52rem;letter-spacing:.2em;color:var(--td);margin-top:2px;font-family:'Share Tech Mono',monospace;}
+.sbnav{flex:1;padding:12px 0;display:flex;flex-direction:column;overflow-y:auto;}
+.sblbl{font-family:'Share Tech Mono',monospace;font-size:.5rem;letter-spacing:.22em;color:rgba(255,106,0,.35);padding:9px 20px 5px;display:block;}
+.sbni{display:flex;align-items:center;gap:10px;padding:10px 20px;cursor:pointer;font-size:.8rem;font-weight:600;color:var(--td);transition:all .2s;position:relative;border:none;background:none;width:100%;text-align:left;}
+.sbni:hover,.sbni.on{color:var(--o);background:rgba(255,106,0,.05);}
+.sbni.on::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--o);box-shadow:var(--ogs);}
+.sbni svg{width:14px;height:14px;flex-shrink:0;}
+.nspc{flex:1;}
+.sbfoot{padding:12px 20px;border-top:1px solid var(--gb);}
+.abadge{font-family:'Share Tech Mono',monospace;font-size:.56rem;letter-spacing:.1em;color:var(--o);background:rgba(255,106,0,.1);border:1px solid rgba(255,106,0,.25);border-radius:2px;padding:4px 9px;display:inline-block;}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;scrollbar-width:thin;scrollbar-color:var(--o) transparent;}
+.main::-webkit-scrollbar{width:3px;}.main::-webkit-scrollbar-thumb{background:var(--o);border-radius:2px;}
+.pg{display:none;padding:26px 30px;}.pg.on{display:block;}
+.ptit{font-family:'Orbitron',monospace;font-size:1.1rem;font-weight:700;letter-spacing:.05em;margin-bottom:4px;}.ptit span{color:var(--o);}
+.psub{font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.14em;color:var(--td);margin-bottom:24px;}
+
+/* STATS */
+.sg{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px;}
+.sc{background:rgba(10,10,10,.95);border:1px solid var(--gb);border-radius:3px;padding:14px 16px;}
+.scl{font-family:'Share Tech Mono',monospace;font-size:.54rem;letter-spacing:.16em;color:var(--td);margin-bottom:5px;}
+.scv{font-family:'Orbitron',monospace;font-size:1.4rem;font-weight:700;color:var(--o);}
+
+/* SECTION HEADER */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.stl{font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.2em;color:rgba(255,106,0,.5);}
+
+/* BUTTONS */
+.btn{background:linear-gradient(135deg,var(--o),#e05200);border:none;border-radius:2px;padding:8px 16px;color:#000;font-family:'Share Tech Mono',monospace;font-size:.6rem;letter-spacing:.14em;cursor:pointer;font-weight:700;transition:all .25s;}
+.btn:hover{box-shadow:var(--og);transform:translateY(-1px);}
+.btns{padding:5px 10px;font-size:.56rem;}
+.bto{background:none;border:1px solid rgba(255,106,0,.3);border-radius:2px;padding:6px 12px;color:var(--o);font-family:'Share Tech Mono',monospace;font-size:.58rem;cursor:pointer;transition:all .25s;}
+.bto:hover{border-color:var(--o);background:rgba(255,106,0,.07);}
+.btd{background:none;border:1px solid rgba(255,68,68,.3);border-radius:2px;padding:5px 10px;color:var(--red);font-family:'Share Tech Mono',monospace;font-size:.56rem;cursor:pointer;transition:all .2s;}
+.btd:hover{background:rgba(255,68,68,.08);border-color:var(--red);}
+
+/* TABLE */
+.tw{background:rgba(10,10,10,.95);border:1px solid var(--gb);border-radius:3px;overflow:hidden;margin-bottom:20px;}
+table{width:100%;border-collapse:collapse;}
+thead tr{border-bottom:1px solid rgba(255,106,0,.15);}
+th{font-family:'Share Tech Mono',monospace;font-size:.54rem;letter-spacing:.16em;color:rgba(255,106,0,.5);padding:10px 14px;text-align:left;white-space:nowrap;}
+td{font-size:.78rem;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.03);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+.bg{font-family:'Share Tech Mono',monospace;font-size:.52rem;letter-spacing:.1em;padding:3px 7px;border-radius:2px;display:inline-block;}
+.bgg{background:rgba(0,255,136,.1);border:1px solid rgba(0,255,136,.25);color:var(--green);}
+.bgr{background:rgba(255,68,68,.08);border:1px solid rgba(255,68,68,.2);color:var(--red);}
+.bgo{background:var(--od);border:1px solid rgba(255,106,0,.25);color:var(--o);}
+
+/* COURSE BLOCKS */
+.cblock{background:rgba(10,10,10,.95);border:1px solid var(--gb);border-radius:3px;margin-bottom:20px;overflow:hidden;}
+.cbhdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(255,106,0,.08);flex-wrap:wrap;gap:10px;}
+.cbname{font-family:'Orbitron',monospace;font-size:.88rem;font-weight:700;}
+.cbmeta{font-size:.7rem;color:var(--td);margin-top:2px;}
+.cbpk{font-family:'Share Tech Mono',monospace;font-size:.56rem;color:rgba(255,106,0,.5);margin-top:3px;}
+.modblock{border:1px solid rgba(255,106,0,.08);border-radius:2px;margin:0 16px 10px;overflow:hidden;}
+.modhdr{display:flex;align-items:center;justify-content:space-between;padding:9px 13px;background:rgba(255,106,0,.03);}
+.modname{font-size:.8rem;font-weight:600;}
+.lrow{padding:0;}
+.lrow-item{display:flex;align-items:center;justify-content:space-between;padding:7px 13px;border-top:1px solid rgba(255,255,255,.03);}
+.lnum{font-family:'Share Tech Mono',monospace;font-size:.54rem;color:rgba(255,106,0,.4);width:22px;flex-shrink:0;}
+.lname{font-size:.78rem;margin-bottom:2px;}
+.lmeta{font-size:.66rem;color:var(--td);}
+.lvid{color:var(--green);font-size:.56rem;margin-left:4px;}
+
+/* MODAL */
+.mo{display:none;position:fixed;inset:0;z-index:100;background:rgba(0,0,0,.88);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:20px;}
+.mo.on{display:flex;}
+.mc{background:rgba(10,10,10,.98);border:1px solid var(--gb);border-radius:4px;width:580px;max-width:96vw;max-height:90vh;overflow-y:auto;position:relative;}
+.mc::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--o),transparent);}
+.mh{display:flex;align-items:center;justify-content:space-between;padding:18px 22px 0;}
+.mt2{font-family:'Orbitron',monospace;font-size:.82rem;font-weight:700;letter-spacing:.06em;}
+.mcl{background:none;border:none;color:var(--td);cursor:pointer;font-size:1rem;font-family:'Share Tech Mono',monospace;}
+.mcl:hover{color:var(--o);}
+.mb{padding:18px 22px 22px;}
+.mfg{margin-bottom:14px;}
+.mfl{font-family:'Share Tech Mono',monospace;font-size:.58rem;letter-spacing:.16em;color:var(--o);display:block;margin-bottom:6px;opacity:.8;}
+.mfi,.mft,.mfs{width:100%;background:rgba(255,106,0,.04);border:1px solid rgba(255,106,0,.2);border-radius:2px;padding:9px 12px;color:#e8e8e8;font-family:'Share Tech Mono',monospace;font-size:.78rem;outline:none;transition:all .3s;}
+.mfi:focus,.mft:focus,.mfs:focus{border-color:var(--o);}
+.mft{resize:vertical;min-height:70px;font-family:'Rajdhani',sans-serif;font-size:.82rem;}
+.mfs{cursor:pointer;}.mfs option{background:#111;}
+.mr2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.mfa{display:flex;gap:8px;justify-content:flex-end;margin-top:18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.05);}
+.minfo-box{background:rgba(255,106,0,.05);border:1px solid rgba(255,106,0,.15);border-radius:2px;padding:10px 12px;margin-top:6px;font-family:'Share Tech Mono',monospace;font-size:.58rem;color:rgba(255,106,0,.7);line-height:1.7;}
+
+/* TOAST */
+#toast{position:fixed;bottom:18px;right:18px;z-index:9999;background:rgba(10,10,10,.97);border:1px solid var(--gb);border-radius:3px;padding:10px 16px;font-family:'Share Tech Mono',monospace;font-size:.62rem;letter-spacing:.1em;max-width:280px;display:none;}
+#toast.ok{border-color:var(--green);color:var(--green);}
+#toast.err{border-color:var(--red);color:var(--red);}
+
+/* SEARCH */
+.sbar{display:flex;gap:8px;margin-bottom:14px;}
+.sfi{flex:1;background:rgba(255,106,0,.04);border:1px solid rgba(255,106,0,.2);border-radius:2px;padding:8px 12px;color:#e8e8e8;font-family:'Share Tech Mono',monospace;font-size:.72rem;outline:none;}
+.sfi:focus{border-color:var(--o);}
+
+/* CONFIG */
+.cg2{display:grid;grid-template-columns:1fr 1fr;gap:18px;}
+.ccard{background:rgba(10,10,10,.95);border:1px solid var(--gb);border-radius:3px;padding:18px;}
+.cctt{font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;color:var(--o);margin-bottom:14px;letter-spacing:.08em;}
+.empty{text-align:center;padding:32px;color:var(--td);font-family:'Share Tech Mono',monospace;font-size:.62rem;}
+
+@media(max-width:768px){.sb{display:none;}.sg{grid-template-columns:repeat(2,1fr);}.cg2{grid-template-columns:1fr;}.mr2{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- LOGIN -->
+<div id="s-login">
+  <div class="ll">VENCEX</div>
+  <div class="ls">// PAINEL ADMIN</div>
+  <div class="lc">
+    <div id="lerr"></div>
+    <div class="fg"><label class="fl">// EMAIL ADMIN</label><input type="email" class="fi" id="lem" placeholder="admin@email.com"></div>
+    <div class="fg"><label class="fl">// SENHA</label><input type="password" class="fi" id="lpw" placeholder="••••••••"></div>
+    <button id="lbtn">ENTRAR NO PAINEL</button>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="s-app">
+  <nav class="sb">
+    <div class="sblogo">VENCEX<span>// ADMIN</span></div>
+    <div class="sbnav">
+      <span class="sblbl">CONTEÚDO</span>
+      <button class="sbni on" id="n-dash" onclick="goPage('dash')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>Dashboard</button>
+      <button class="sbni" id="n-courses" onclick="goPage('courses')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>Cursos</button>
+      <button class="sbni" id="n-workflows" onclick="goPage('workflows')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>Workflows</button>
+      <button class="sbni" id="n-ann" onclick="goPage('ann')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>Novidades</button>
+      <span class="sblbl">MEMBROS</span>
+      <button class="sbni" id="n-members" onclick="goPage('members')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>Membros</button>
+      <span class="sblbl">SISTEMA</span>
+      <button class="sbni" id="n-config" onclick="goPage('config')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2v4M12 18v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M2 12h4M18 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>Configurações</button>
+      <div class="nspc"></div>
+      <button class="sbni" onclick="doLogout()" style="color:#444;"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>Sair</button>
+    </div>
+    <div class="sbfoot"><div class="abadge">● ADMIN ATIVO</div></div>
+  </nav>
+
+  <div class="main">
+
+    <!-- DASHBOARD -->
+    <div class="pg on" id="pg-dash">
+      <div class="ptit">Dashboard <span>Admin</span></div><div class="psub">// VISÃO GERAL DO SISTEMA</div>
+      <div class="sg">
+        <div class="sc"><div class="scl">MEMBROS ATIVOS</div><div class="scv" id="d-mem">—</div></div>
+        <div class="sc"><div class="scl">CURSOS</div><div class="scv" id="d-cur">—</div></div>
+        <div class="sc"><div class="scl">AULAS TOTAIS</div><div class="scv" id="d-les">—</div></div>
+        <div class="sc"><div class="scl">WORKFLOWS</div><div class="scv" id="d-wf">—</div></div>
+      </div>
+      <div class="sh"><span class="stl">ÚLTIMOS MEMBROS</span></div>
+      <div class="tw"><table>
+        <thead><tr><th>EMAIL</th><th>PLANO</th><th>STATUS</th><th>EXPIRA</th></tr></thead>
+        <tbody id="d-tb"></tbody>
+      </table></div>
+    </div>
+
+    <!-- CURSOS -->
+    <div class="pg" id="pg-courses">
+      <div class="ptit"><span>Cursos</span></div>
+      <div class="psub">// GERENCIE CURSOS, MÓDULOS E AULAS — TUDO ATUALIZA AUTOMATICAMENTE PARA OS ALUNOS</div>
+      <div class="sh">
+        <span class="stl">CURSOS CADASTRADOS</span>
+        <button class="btn btns" onclick="openCourseModal()">+ NOVO CURSO</button>
+      </div>
+      <div id="courses-list"><div class="empty">Carregando...</div></div>
+    </div>
+
+    <!-- WORKFLOWS -->
+    <div class="pg" id="pg-workflows">
+      <div class="ptit"><span>Workflows</span></div><div class="psub">// AUTOMAÇÕES</div>
+      <div class="sh"><span class="stl">WORKFLOWS</span><button class="btn btns" onclick="openWfModal()">+ NOVO</button></div>
+      <div class="tw"><table>
+        <thead><tr><th>TÍTULO</th><th>TAG</th><th>STATUS</th><th>AÇÕES</th></tr></thead>
+        <tbody id="wf-tb"></tbody>
+      </table></div>
+    </div>
+
+    <!-- NOVIDADES -->
+    <div class="pg" id="pg-ann">
+      <div class="ptit"><span>Novidades</span></div><div class="psub">// AVISOS PARA OS ALUNOS</div>
+      <div class="sh"><span class="stl">AVISOS</span><button class="btn btns" onclick="openAnnModal()">+ NOVO</button></div>
+      <div class="tw"><table>
+        <thead><tr><th>TÍTULO</th><th>FIXADO</th><th>STATUS</th><th>DATA</th><th>AÇÕES</th></tr></thead>
+        <tbody id="ann-tb"></tbody>
+      </table></div>
+    </div>
+
+    <!-- MEMBROS -->
+    <div class="pg" id="pg-members">
+      <div class="ptit"><span>Membros</span></div><div class="psub">// GESTÃO DE ACESSOS</div>
+      <div class="sbar">
+        <input class="sfi" id="msrch" placeholder="Buscar por email..." oninput="filterMem()">
+        <button class="btn btns" onclick="openAddMemModal()">+ ADICIONAR</button>
+      </div>
+      <div class="tw"><table>
+        <thead><tr><th>EMAIL</th><th>PLANO</th><th>STATUS</th><th>EXPIRA</th><th>FONTE</th><th>AÇÕES</th></tr></thead>
+        <tbody id="mem-tb"></tbody>
+      </table></div>
+    </div>
+
+    <!-- CONFIG -->
+    <div class="pg" id="pg-config">
+      <div class="ptit"><span>Configurações</span></div><div class="psub">// PERSONALIZAÇÃO</div>
+      <div class="cg2">
+        <div class="ccard"><div class="cctt">// IDENTIDADE</div>
+          <div class="mfg"><label class="mfl">NOME DO SITE</label><input class="mfi" id="cfg-name" placeholder="VENCEX"></div>
+          <div class="mfg"><label class="mfl">SUBTÍTULO</label><input class="mfi" id="cfg-sub" placeholder="Sistema Operacional"></div>
+          <div class="mfg"><label class="mfl">BOAS-VINDAS</label><input class="mfi" id="cfg-welcome" placeholder="Bem-vindo, Operador"></div>
+        </div>
+        <div class="ccard"><div class="cctt">// LINKS</div>
+          <div class="mfg"><label class="mfl">EMAIL SUPORTE</label><input class="mfi" id="cfg-email" placeholder="suporte@vencex.io"></div>
+          <div class="mfg"><label class="mfl">URL COMUNIDADE</label><input class="mfi" id="cfg-community" placeholder="https://..."></div>
+          <div class="mfg"><label class="mfl">URL VENDAS</label><input class="mfi" id="cfg-sales" placeholder="https://..."></div>
+        </div>
+      </div>
+      <div style="margin-top:14px;display:flex;justify-content:flex-end;"><button class="btn" onclick="saveConfig()">SALVAR</button></div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══════ MODALS ═══════ -->
+
+<!-- CURSO -->
+<div class="mo" id="m-course">
+  <div class="mc">
+    <div class="mh"><div class="mt2" id="mc-title">NOVO CURSO</div><button class="mcl" onclick="closeModal('m-course')">✕</button></div>
+    <div class="mb">
+      <input type="hidden" id="mc-id">
+      <div class="mfg"><label class="mfl">TÍTULO DO CURSO</label><input class="mfi" id="mc-name" placeholder="Ex: IA do Job — Do Zero ao Avançado"></div>
+      <div class="mfg"><label class="mfl">DESCRIÇÃO</label><textarea class="mft" id="mc-desc" placeholder="Descreva o que o aluno vai aprender..."></textarea></div>
+      <div class="mfg">
+        <label class="mfl">PRODUCT KEY</label>
+        <input class="mfi" id="mc-pkey" placeholder="ID ou nome do produto na Luxfy/Hotmart">
+        <div class="minfo-box">⚡ Esta chave vincula automaticamente o curso ao aluno quando ele compra.<br>Cole o ID exato do produto na sua plataforma de vendas.</div>
+      </div>
+      <div class="mr2">
+        <div class="mfg"><label class="mfl">TAG (categoria)</label><input class="mfi" id="mc-tag" placeholder="Ex: IA, AUTOMAÇÃO"></div>
+        <div class="mfg"><label class="mfl">STATUS</label><select class="mfs" id="mc-active"><option value="true">Ativo — visível para alunos</option><option value="false">Inativo — oculto</option></select></div>
+      </div>
+      <div class="mfa">
+        <button class="bto" onclick="closeModal('m-course')">CANCELAR</button>
+        <button class="btn" onclick="saveCourse()">SALVAR CURSO</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MÓDULO DO CURSO -->
+<div class="mo" id="m-cmod">
+  <div class="mc">
+    <div class="mh"><div class="mt2" id="mm-title">NOVO MÓDULO</div><button class="mcl" onclick="closeModal('m-cmod')">✕</button></div>
+    <div class="mb">
+      <input type="hidden" id="mm-id"><input type="hidden" id="mm-cid">
+      <div class="mfg"><label class="mfl">TÍTULO DO MÓDULO</label><input class="mfi" id="mm-name" placeholder="Ex: Módulo 1 — Fundamentos"></div>
+      <div class="mfg"><label class="mfl">DESCRIÇÃO (opcional)</label><textarea class="mft" id="mm-desc" placeholder="O que este módulo cobre..."></textarea></div>
+      <div class="mr2">
+        <div class="mfg"><label class="mfl">POSIÇÃO (ordem)</label><input type="number" class="mfi" id="mm-pos" value="1" min="1"></div>
+        <div class="mfg"><label class="mfl">STATUS</label><select class="mfs" id="mm-active"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
+      </div>
+      <div class="mfa">
+        <button class="bto" onclick="closeModal('m-cmod')">CANCELAR</button>
+        <button class="btn" onclick="saveCmod()">SALVAR MÓDULO</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AULA DO CURSO -->
+<div class="mo" id="m-cles">
+  <div class="mc">
+    <div class="mh"><div class="mt2" id="ml-title">NOVA AULA</div><button class="mcl" onclick="closeModal('m-cles')">✕</button></div>
+    <div class="mb">
+      <input type="hidden" id="ml-id"><input type="hidden" id="ml-mid"><input type="hidden" id="ml-cid">
+      <div class="mfg"><label class="mfl">TÍTULO DA AULA</label><input class="mfi" id="ml-name" placeholder="Ex: Introdução ao sistema"></div>
+      <div class="mfg"><label class="mfl">DESCRIÇÃO (opcional)</label><textarea class="mft" id="ml-desc" placeholder="O que o aluno vai aprender nesta aula..."></textarea></div>
+      <div class="mfg">
+        <label class="mfl">URL DO VÍDEO</label>
+        <input class="mfi" id="ml-video" placeholder="https://youtube.com/watch?v=... ou https://vimeo.com/...">
+        <div class="minfo-box">📺 Suporta YouTube, Vimeo, Panda Video e qualquer link de vídeo.<br>O player abre direto na área de membros ao clicar na aula.</div>
+      </div>
+      <div class="mr2">
+        <div class="mfg"><label class="mfl">DURAÇÃO</label><input class="mfi" id="ml-dur" placeholder="Ex: 42 min"></div>
+        <div class="mfg"><label class="mfl">POSIÇÃO (ordem)</label><input type="number" class="mfi" id="ml-pos" value="1" min="1"></div>
+      </div>
+      <div class="mfg"><label class="mfl">STATUS</label><select class="mfs" id="ml-active"><option value="true">Ativo — visível para alunos</option><option value="false">Inativo — oculto</option></select></div>
+      <div class="mfa">
+        <button class="bto" onclick="closeModal('m-cles')">CANCELAR</button>
+        <button class="btn" onclick="saveCles()">SALVAR AULA</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- WORKFLOW -->
+<div class="mo" id="m-wf">
+  <div class="mc">
+    <div class="mh"><div class="mt2" id="mw-title">NOVO WORKFLOW</div><button class="mcl" onclick="closeModal('m-wf')">✕</button></div>
+    <div class="mb">
+      <input type="hidden" id="mw-id">
+      <div class="mfg"><label class="mfl">TÍTULO</label><input class="mfi" id="mw-name" placeholder="Ex: Lead Nurture Pro"></div>
+      <div class="mfg"><label class="mfl">DESCRIÇÃO</label><textarea class="mft" id="mw-desc"></textarea></div>
+      <div class="mr2">
+        <div class="mfg"><label class="mfl">TAG</label><input class="mfi" id="mw-tag" placeholder="VENDAS"></div>
+        <div class="mfg"><label class="mfl">STATUS</label><select class="mfs" id="mw-active"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
+      </div>
+      <div class="mfg"><label class="mfl">URL DO ARQUIVO (Google Drive, Notion, etc)</label><input class="mfi" id="mw-url" placeholder="https://..."></div>
+      <div class="mfa">
+        <button class="bto" onclick="closeModal('m-wf')">CANCELAR</button>
+        <button class="btn" onclick="saveWf()">SALVAR</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AVISO -->
+<div class="mo" id="m-ann">
+  <div class="mc">
+    <div class="mh"><div class="mt2" id="ma-title">NOVO AVISO</div><button class="mcl" onclick="closeModal('m-ann')">✕</button></div>
+    <div class="mb">
+      <input type="hidden" id="ma-id">
+      <div class="mfg"><label class="mfl">TÍTULO</label><input class="mfi" id="ma-name" placeholder="Ex: Nova aula disponível!"></div>
+      <div class="mfg"><label class="mfl">CONTEÚDO</label><textarea class="mft" id="ma-content" style="min-height:100px;"></textarea></div>
+      <div class="mr2">
+        <div class="mfg"><label class="mfl">STATUS</label><select class="mfs" id="ma-active"><option value="true">Ativo</option><option value="false">Inativo</option></select></div>
+        <div class="mfg"><label class="mfl">FIXAR NO TOPO</label><select class="mfs" id="ma-pin"><option value="false">Não</option><option value="true">Sim</option></select></div>
+      </div>
+      <div class="mfa">
+        <button class="bto" onclick="closeModal('m-ann')">CANCELAR</button>
+        <button class="btn" onclick="saveAnn()">SALVAR</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ADD MEMBRO -->
+<div class="mo" id="m-mem">
+  <div class="mc">
+    <div class="mh"><div class="mt2">ADICIONAR MEMBRO</div><button class="mcl" onclick="closeModal('m-mem')">✕</button></div>
+    <div class="mb">
+      <div class="mfg"><label class="mfl">EMAIL</label><input type="email" class="mfi" id="nm-email" placeholder="email@cliente.com"></div>
+      <div class="mr2">
+        <div class="mfg"><label class="mfl">PLANO</label><input class="mfi" id="nm-plan" value="premium"></div>
+        <div class="mfg"><label class="mfl">EXPIRA (vazio = vitalício)</label><input type="date" class="mfi" id="nm-exp"></div>
+      </div>
+      <div class="mfa">
+        <button class="bto" onclick="closeModal('m-mem')">CANCELAR</button>
+        <button class="btn" onclick="addMem()">ADICIONAR</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const SU='https://jujyexeyanahezwpgflb.supabase.co';
+const SK='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp1anlleGV5YW5haGV6d3BnZmxiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQwMjQ5MjAsImV4cCI6MjA4OTYwMDkyMH0._mC7H7yNF3gX-8iQZFAtJzSsHandYJMRS69V7giXmME';
+const sb=window.supabase.createClient(SU,SK);
+const ADMINS=['pedroprofissionaladmin@gmail.com','pedroprofissional200222@gmail.com'];
+let allMem=[];
+
+// ── UTILS ────────────────────────────────────────────────
+function toast(m,t){const e=document.getElementById('toast');e.textContent=m;e.className=t||'ok';e.style.display='block';setTimeout(()=>e.style.display='none',3000);}
+function openModal(id){document.getElementById(id).classList.add('on');}
+function closeModal(id){document.getElementById(id).classList.remove('on');}
+function safeJson(x){try{return JSON.stringify(x);}catch(e){return '{}'}}
+document.querySelectorAll('.mo').forEach(m=>m.onclick=function(e){if(e.target===m)m.classList.remove('on');});
+
+// ── LOGIN ────────────────────────────────────────────────
+document.getElementById('lbtn').onclick=doLogin;
+document.getElementById('lpw').onkeydown=function(e){if(e.key==='Enter')doLogin();};
+document.getElementById('lem').onkeydown=function(e){if(e.key==='Enter')document.getElementById('lpw').focus();};
+
+async function doLogin(){
+  const email=document.getElementById('lem').value.trim();
+  const pass=document.getElementById('lpw').value;
+  const err=document.getElementById('lerr');
+  const btn=document.getElementById('lbtn');
+  err.style.display='none';
+  if(!email||!pass){err.textContent='Preencha email e senha.';err.style.display='block';return;}
+  if(!ADMINS.includes(email)){err.textContent='Este email não tem acesso admin.';err.style.display='block';return;}
+  btn.disabled=true;btn.textContent='VERIFICANDO...';
+  const {data,error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.disabled=false;btn.textContent='ENTRAR NO PAINEL';
+  if(error||!data?.user){err.textContent='Email ou senha incorretos.';err.style.display='block';return;}
+  if(!ADMINS.includes(data.user.email)){err.textContent='Acesso negado.';err.style.display='block';return;}
+  showApp();
+}
+
+function showApp(){
+  document.getElementById('s-login').style.display='none';
+  document.getElementById('s-app').style.display='flex';
+  loadDash();
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  document.getElementById('s-app').style.display='none';
+  document.getElementById('s-login').style.display='flex';
+  document.getElementById('lerr').style.display='none';
+}
+
+window.addEventListener('DOMContentLoaded',async function(){
+  const {data:{session}}=await sb.auth.getSession();
+  if(session&&ADMINS.includes(session.user.email))showApp();
+});
+
+// ── NAVIGATION ───────────────────────────────────────────
+function goPage(name){
+  document.querySelectorAll('.pg').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.sbni').forEach(n=>n.classList.remove('on'));
+  document.getElementById('pg-'+name).classList.add('on');
+  const nv=document.getElementById('n-'+name);if(nv)nv.classList.add('on');
+  const fns={dash:loadDash,courses:loadCourses,workflows:loadWfs,ann:loadAnns,members:loadMem,config:loadCfg};
+  if(fns[name])fns[name]();
+}
+
+// ── DASHBOARD ────────────────────────────────────────────
+async function loadDash(){
+  const [r1,r2,r3,r4]=await Promise.all([
+    sb.from('memberships').select('*',{count:'exact',head:true}).eq('status','active'),
+    sb.from('courses').select('*',{count:'exact',head:true}).eq('active',true),
+    sb.from('course_lessons').select('*',{count:'exact',head:true}).eq('active',true),
+    sb.from('workflows').select('*',{count:'exact',head:true}).eq('active',true),
+  ]);
+  document.getElementById('d-mem').textContent=r1.count??0;
+  document.getElementById('d-cur').textContent=r2.count??0;
+  document.getElementById('d-les').textContent=r3.count??0;
+  document.getElementById('d-wf').textContent=r4.count??0;
+  const {data:mems}=await sb.from('memberships').select('*').eq('status','active').order('created_at',{ascending:false}).limit(8);
+  const tb=document.getElementById('d-tb');
+  if(!mems?.length){tb.innerHTML='<tr><td colspan="4" class="empty">Nenhum membro ainda.</td></tr>';return;}
+  tb.innerHTML=mems.map(m=>`<tr>
+    <td style="font-family:'Share Tech Mono',monospace;font-size:.7rem;">${m.email}</td>
+    <td><span class="bg bgo">${(m.plan||'').toUpperCase()}</span></td>
+    <td><span class="bg ${m.status==='active'?'bgg':'bgr'}">${m.status}</span></td>
+    <td style="font-family:'Share Tech Mono',monospace;font-size:.66rem;color:var(--td);">${m.expires_at?new Date(m.expires_at).toLocaleDateString('pt-BR'):'Vitalício'}</td>
+  </tr>`).join('');
+}
+
+// ══════════════════════════════════════════════════════════
+// CURSOS — SEÇÃO PRINCIPAL
+// ══════════════════════════════════════════════════════════
+async function loadCourses(){
+  const list=document.getElementById('courses-list');
+  list.innerHTML='<div class="empty">Carregando...</div>';
+
+  const {data:courses}=await sb.from('courses').select('*').order('position');
+  const {data:cmods}=await sb.from('course_modules').select('*').order('position');
+  const {data:cles}=await sb.from('course_lessons').select('*').order('position');
+  const {data:enrs}=await sb.from('course_enrollments').select('course_id');
+
+  if(!courses?.length){
+    list.innerHTML='<div class="empty">Nenhum curso cadastrado.<br>Clique em "+ NOVO CURSO" para criar seu primeiro curso.</div>';
+    return;
+  }
+
+  const enrollCount={};
+  (enrs||[]).forEach(e=>{enrollCount[e.course_id]=(enrollCount[e.course_id]||0)+1;});
+
+  let html='';
+  courses.forEach(course=>{
+    const mods=(cmods||[]).filter(m=>m.course_id===course.id);
+    const totalLes=(cles||[]).filter(l=>l.course_id===course.id).length;
+    const alunos=enrollCount[course.id]||0;
+
+    html+=`<div class="cblock">`;
+
+    // Header do curso
+    html+=`<div class="cbhdr">
+      <div>
+        <div class="cbname">${course.title}</div>
+        <div class="cbmeta">${mods.length} módulo${mods.length!==1?'s':''} · ${totalLes} aula${totalLes!==1?'s':''} · <span style="color:var(--green);">${alunos} aluno${alunos!==1?'s':''}</span></div>
+        <div class="cbpk">PRODUCT KEY: ${course.product_key||'<span style="color:#f44;">NÃO DEFINIDA</span>'}</div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">
+        <span class="bg ${course.active?'bgg':'bgr'}">${course.active?'ATIVO':'INATIVO'}</span>
+        <button class="btn btns" data-action="addmod" data-cid="${course.id}">+ Módulo</button>
+        <button class="bto btns" data-action="editcourse" data-obj="${encodeURIComponent(safeJson(course))}">Editar</button>
+        <button class="btd btns" data-action="delcourse" data-id="${course.id}">Excluir</button>
+      </div>
+    </div>`;
+
+    // Módulos e aulas
+    if(!mods.length){
+      html+=`<div style="padding:14px 20px;font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--td);">Nenhum módulo ainda. Clique em "+ Módulo" para adicionar.</div>`;
+    }else{
+      html+=`<div style="padding:12px 16px 4px;">`;
+      mods.forEach(mod=>{
+        const ls=(cles||[]).filter(l=>l.module_id===mod.id);
+        html+=`<div class="modblock">
+          <div class="modhdr">
+            <div><span class="modname">${mod.title}</span> <span style="font-family:'Share Tech Mono',monospace;font-size:.6rem;color:var(--td);">(${ls.length} aula${ls.length!==1?'s':''})</span></div>
+            <div style="display:flex;gap:4px;">
+              <button class="btn btns" data-action="addaula" data-mid="${mod.id}" data-cid="${course.id}">+ Aula</button>
+              <button class="bto btns" data-action="editmod" data-obj="${encodeURIComponent(safeJson(mod))}">Editar</button>
+              <button class="btd btns" data-action="delmod" data-id="${mod.id}">✕</button>
+            </div>
+          </div>`;
+        if(!ls.length){
+          html+=`<div style="padding:8px 13px;font-family:'Share Tech Mono',monospace;font-size:.58rem;color:var(--td);">Nenhuma aula. Clique em "+ Aula" para adicionar.</div>`;
+        }else{
+          html+=`<div class="lrow">`;
+          ls.forEach((l,i)=>{
+            html+=`<div class="lrow-item">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <span class="lnum">${String(l.position||i+1).padStart(2,'0')}</span>
+                <div>
+                  <div class="lname">${l.title}</div>
+                  <div class="lmeta">${l.duration||'—'}${l.video_url?'<span class="lvid">● VIDEO</span>':''}</div>
+                </div>
+              </div>
+              <div style="display:flex;gap:4px;">
+                <button class="bto btns" data-action="editaula" data-obj="${encodeURIComponent(safeJson(l))}">Editar</button>
+                <button class="btd btns" data-action="delaula" data-id="${l.id}">✕</button>
+              </div>
+            </div>`;
+          });
+          html+=`</div>`;
+        }
+        html+=`</div>`;
+      });
+      html+=`</div>`;
+    }
+    html+=`</div>`;
+  });
+
+  list.innerHTML=html;
+
+  // Event delegation — um único listener para tudo
+  list.onclick=function(e){
+    const btn=e.target.closest('button[data-action]');
+    if(!btn)return;
+    const a=btn.dataset.action;
+    if(a==='addmod')     openCmodModal(btn.dataset.cid);
+    else if(a==='editcourse') editCourse(JSON.parse(decodeURIComponent(btn.dataset.obj)));
+    else if(a==='delcourse')  delCourse(btn.dataset.id);
+    else if(a==='addaula')    openClesModal(btn.dataset.mid,btn.dataset.cid);
+    else if(a==='editmod')    editCmod(JSON.parse(decodeURIComponent(btn.dataset.obj)));
+    else if(a==='delmod')     delCmod(btn.dataset.id);
+    else if(a==='editaula')   editCles(JSON.parse(decodeURIComponent(btn.dataset.obj)));
+    else if(a==='delaula')    delCles(btn.dataset.id);
+  };
+}
+
+// CURSO — CRUD
+function openCourseModal(){
+  document.getElementById('mc-title').textContent='NOVO CURSO';
+  ['mc-id','mc-name','mc-desc','mc-pkey','mc-tag'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mc-active').value='true';
+  openModal('m-course');
+}
+function editCourse(c){
+  document.getElementById('mc-title').textContent='EDITAR CURSO';
+  document.getElementById('mc-id').value=c.id;
+  document.getElementById('mc-name').value=c.title||'';
+  document.getElementById('mc-desc').value=c.description||'';
+  document.getElementById('mc-pkey').value=c.product_key||'';
+  document.getElementById('mc-tag').value=c.tag||'';
+  document.getElementById('mc-active').value=String(c.active);
+  openModal('m-course');
+}
+async function saveCourse(){
+  const id=document.getElementById('mc-id').value;
+  const d={
+    title:document.getElementById('mc-name').value.trim(),
+    description:document.getElementById('mc-desc').value.trim(),
+    product_key:document.getElementById('mc-pkey').value.trim(),
+    tag:document.getElementById('mc-tag').value.trim(),
+    active:document.getElementById('mc-active').value==='true',
+    updated_at:new Date().toISOString()
+  };
+  if(!d.title){toast('Digite o título do curso.','err');return;}
+  const {error}=id?await sb.from('courses').update(d).eq('id',id):await sb.from('courses').insert(d);
+  if(error){toast('Erro: '+error.message,'err');return;}
+  toast(id?'✓ Curso atualizado! Alunos já veem a mudança.':'✓ Curso criado com sucesso!');
+  closeModal('m-course');loadCourses();
+}
+async function delCourse(id){
+  if(!confirm('Excluir este curso e todos os módulos/aulas?'))return;
+  await sb.from('courses').delete().eq('id',id);
+  toast('Curso excluído.');loadCourses();
+}
+
+// MÓDULO — CRUD
+function openCmodModal(cid){
+  document.getElementById('mm-title').textContent='NOVO MÓDULO';
+  document.getElementById('mm-id').value='';
+  document.getElementById('mm-cid').value=cid;
+  document.getElementById('mm-name').value='';
+  document.getElementById('mm-desc').value='';
+  document.getElementById('mm-pos').value=1;
+  document.getElementById('mm-active').value='true';
+  openModal('m-cmod');
+}
+function editCmod(m){
+  document.getElementById('mm-title').textContent='EDITAR MÓDULO';
+  document.getElementById('mm-id').value=m.id;
+  document.getElementById('mm-cid').value=m.course_id;
+  document.getElementById('mm-name').value=m.title||'';
+  document.getElementById('mm-desc').value=m.description||'';
+  document.getElementById('mm-pos').value=m.position||1;
+  document.getElementById('mm-active').value=String(m.active);
+  openModal('m-cmod');
+}
+async function saveCmod(){
+  const id=document.getElementById('mm-id').value;
+  const d={
+    course_id:document.getElementById('mm-cid').value,
+    title:document.getElementById('mm-name').value.trim(),
+    description:document.getElementById('mm-desc').value.trim(),
+    position:parseInt(document.getElementById('mm-pos').value)||1,
+    active:document.getElementById('mm-active').value==='true',
+    updated_at:new Date().toISOString()
+  };
+  if(!d.title){toast('Digite o título do módulo.','err');return;}
+  const {error}=id?await sb.from('course_modules').update(d).eq('id',id):await sb.from('course_modules').insert(d);
+  if(error){toast('Erro: '+error.message,'err');return;}
+  toast(id?'✓ Módulo atualizado!':'✓ Módulo criado! Já aparece para os alunos.');
+  closeModal('m-cmod');loadCourses();
+}
+async function delCmod(id){
+  if(!confirm('Excluir este módulo e suas aulas?'))return;
+  await sb.from('course_modules').delete().eq('id',id);
+  toast('Módulo excluído.');loadCourses();
+}
+
+// AULA — CRUD
+function openClesModal(mid,cid){
+  document.getElementById('ml-title').textContent='NOVA AULA';
+  document.getElementById('ml-id').value='';
+  document.getElementById('ml-mid').value=mid;
+  document.getElementById('ml-cid').value=cid;
+  ['ml-name','ml-desc','ml-video','ml-dur'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ml-pos').value=1;
+  document.getElementById('ml-active').value='true';
+  openModal('m-cles');
+}
+function editCles(l){
+  document.getElementById('ml-title').textContent='EDITAR AULA';
+  document.getElementById('ml-id').value=l.id;
+  document.getElementById('ml-mid').value=l.module_id;
+  document.getElementById('ml-cid').value=l.course_id;
+  document.getElementById('ml-name').value=l.title||'';
+  document.getElementById('ml-desc').value=l.description||'';
+  document.getElementById('ml-video').value=l.video_url||'';
+  document.getElementById('ml-dur').value=l.duration||'';
+  document.getElementById('ml-pos').value=l.position||1;
+  document.getElementById('ml-active').value=String(l.active);
+  openModal('m-cles');
+}
+async function saveCles(){
+  const id=document.getElementById('ml-id').value;
+  const d={
+    module_id:document.getElementById('ml-mid').value,
+    course_id:document.getElementById('ml-cid').value,
+    title:document.getElementById('ml-name').value.trim(),
+    description:document.getElementById('ml-desc').value.trim(),
+    video_url:document.getElementById('ml-video').value.trim(),
+    duration:document.getElementById('ml-dur').value.trim(),
+    position:parseInt(document.getElementById('ml-pos').value)||1,
+    active:document.getElementById('ml-active').value==='true',
+    updated_at:new Date().toISOString()
+  };
+  if(!d.title){toast('Digite o título da aula.','err');return;}
+  const {error}=id?await sb.from('course_lessons').update(d).eq('id',id):await sb.from('course_lessons').insert(d);
+  if(error){toast('Erro: '+error.message,'err');return;}
+  toast(id?'✓ Aula atualizada!':'✓ Aula criada! Disponível para os alunos agora.');
+  closeModal('m-cles');loadCourses();
+}
+async function delCles(id){
+  if(!confirm('Excluir esta aula?'))return;
+  await sb.from('course_lessons').delete().eq('id',id);
+  toast('Aula excluída.');loadCourses();
+}
+
+// WORKFLOWS
+async function loadWfs(){
+  const {data}=await sb.from('workflows').select('*').order('position');
+  const tb=document.getElementById('wf-tb');
+  if(!data?.length){tb.innerHTML='<tr><td colspan="4" class="empty">Nenhum workflow.</td></tr>';return;}
+  tb.innerHTML=data.map(w=>`<tr>
+    <td><div style="font-weight:600;">${w.title}</div><div style="font-size:.7rem;color:var(--td);">${(w.description||'').substring(0,60)}</div></td>
+    <td><span class="bg bgo">${w.tag||'—'}</span></td>
+    <td><span class="bg ${w.active?'bgg':'bgr'}">${w.active?'Ativo':'Inativo'}</span></td>
+    <td><div style="display:flex;gap:4px;">
+      <button class="bto btns" data-action="editwf" data-obj="${encodeURIComponent(safeJson(w))}">Editar</button>
+      <button class="btd btns" data-action="delwf" data-id="${w.id}">Excluir</button>
+    </div></td>
+  </tr>`).join('');
+  tb.onclick=function(e){
+    const btn=e.target.closest('button[data-action]');if(!btn)return;
+    if(btn.dataset.action==='editwf')editWf(JSON.parse(decodeURIComponent(btn.dataset.obj)));
+    if(btn.dataset.action==='delwf')delWf(btn.dataset.id);
+  };
+}
+function openWfModal(){
+  document.getElementById('mw-title').textContent='NOVO WORKFLOW';
+  ['mw-id','mw-name','mw-desc','mw-tag','mw-url'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('mw-active').value='true';openModal('m-wf');
+}
+function editWf(w){
+  document.getElementById('mw-title').textContent='EDITAR WORKFLOW';
+  document.getElementById('mw-id').value=w.id;
+  document.getElementById('mw-name').value=w.title||'';
+  document.getElementById('mw-desc').value=w.description||'';
+  document.getElementById('mw-tag').value=w.tag||'';
+  document.getElementById('mw-url').value=w.file_url||'';
+  document.getElementById('mw-active').value=String(w.active);
+  openModal('m-wf');
+}
+async function saveWf(){
+  const id=document.getElementById('mw-id').value;
+  const d={title:document.getElementById('mw-name').value.trim(),description:document.getElementById('mw-desc').value.trim(),tag:document.getElementById('mw-tag').value.trim().toUpperCase(),file_url:document.getElementById('mw-url').value.trim(),active:document.getElementById('mw-active').value==='true',updated_at:new Date().toISOString()};
+  if(!d.title){toast('Digite o título.','err');return;}
+  const {error}=id?await sb.from('workflows').update(d).eq('id',id):await sb.from('workflows').insert(d);
+  if(error){toast('Erro: '+error.message,'err');return;}
+  toast(id?'✓ Atualizado!':'✓ Criado!');closeModal('m-wf');loadWfs();
+}
+async function delWf(id){if(!confirm('Excluir?'))return;await sb.from('workflows').delete().eq('id',id);toast('Excluído.');loadWfs();}
+
+// ANNOUNCEMENTS
+async function loadAnns(){
+  const {data}=await sb.from('announcements').select('*').order('created_at',{ascending:false});
+  const tb=document.getElementById('ann-tb');
+  if(!data?.length){tb.innerHTML='<tr><td colspan="5" class="empty">Nenhum aviso.</td></tr>';return;}
+  tb.innerHTML=data.map(a=>`<tr>
+    <td><div style="font-weight:600;">${a.title}</div></td>
+    <td>${a.pinned?'<span class="bg bgo">Sim</span>':'—'}</td>
+    <td><span class="bg ${a.active?'bgg':'bgr'}">${a.active?'Ativo':'Inativo'}</span></td>
+    <td style="font-family:'Share Tech Mono',monospace;font-size:.66rem;color:var(--td);">${new Date(a.created_at).toLocaleDateString('pt-BR')}</td>
+    <td><div style="display:flex;gap:4px;">
+      <button class="bto btns" data-action="editann" data-obj="${encodeURIComponent(safeJson(a))}">Editar</button>
+      <button class="btd btns" data-action="delann" data-id="${a.id}">Excluir</button>
+    </div></td>
+  </tr>`).join('');
+  tb.onclick=function(e){
+    const btn=e.target.closest('button[data-action]');if(!btn)return;
+    if(btn.dataset.action==='editann')editAnn(JSON.parse(decodeURIComponent(btn.dataset.obj)));
+    if(btn.dataset.action==='delann')delAnn(btn.dataset.id);
+  };
+}
+function openAnnModal(){
+  document.getElementById('ma-title').textContent='NOVO AVISO';
+  ['ma-id','ma-name','ma-content'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('ma-active').value='true';document.getElementById('ma-pin').value='false';
+  openModal('m-ann');
+}
+function editAnn(a){
+  document.getElementById('ma-title').textContent='EDITAR AVISO';
+  document.getElementById('ma-id').value=a.id;document.getElementById('ma-name').value=a.title||'';
+  document.getElementById('ma-content').value=a.content||'';document.getElementById('ma-active').value=String(a.active);
+  document.getElementById('ma-pin').value=String(a.pinned);openModal('m-ann');
+}
+async function saveAnn(){
+  const id=document.getElementById('ma-id').value;
+  const d={title:document.getElementById('ma-name').value.trim(),content:document.getElementById('ma-content').value.trim(),active:document.getElementById('ma-active').value==='true',pinned:document.getElementById('ma-pin').value==='true',updated_at:new Date().toISOString()};
+  if(!d.title){toast('Digite o título.','err');return;}
+  const {error}=id?await sb.from('announcements').update(d).eq('id',id):await sb.from('announcements').insert(d);
+  if(error){toast('Erro: '+error.message,'err');return;}
+  toast(id?'✓ Atualizado!':'✓ Criado!');closeModal('m-ann');loadAnns();
+}
+async function delAnn(id){if(!confirm('Excluir?'))return;await sb.from('announcements').delete().eq('id',id);toast('Excluído.');loadAnns();}
+
+// MEMBERS
+async function loadMem(){
+  const {data}=await sb.from('memberships').select('*').order('created_at',{ascending:false});
+  allMem=data||[];renderMem(allMem);
+}
+function renderMem(ms){
+  const tb=document.getElementById('mem-tb');
+  if(!ms.length){tb.innerHTML='<tr><td colspan="6" class="empty">Nenhum membro.</td></tr>';return;}
+  tb.innerHTML=ms.map(m=>`<tr>
+    <td style="font-family:'Share Tech Mono',monospace;font-size:.68rem;">${m.email}</td>
+    <td><span class="bg bgo">${(m.plan||'').toUpperCase()}</span></td>
+    <td><span class="bg ${m.status==='active'?'bgg':'bgr'}">${m.status}</span></td>
+    <td style="font-family:'Share Tech Mono',monospace;font-size:.66rem;color:var(--td);">${m.expires_at?new Date(m.expires_at).toLocaleDateString('pt-BR'):'Vitalício'}</td>
+    <td style="font-family:'Share Tech Mono',monospace;font-size:.62rem;color:var(--td);">${m.source||'—'}</td>
+    <td><div style="display:flex;gap:4px;flex-wrap:wrap;">
+      ${m.status==='active'
+        ?`<button class="btd btns" data-action="deact" data-id="${m.id}">Desativar</button>`
+        :`<button class="bto btns" data-action="act" data-id="${m.id}">Ativar</button>`}
+      <button class="btd btns" data-action="delmem" data-id="${m.id}">Excluir</button>
+    </div></td>
+  </tr>`).join('');
+  tb.onclick=function(e){
+    const btn=e.target.closest('button[data-action]');if(!btn)return;
+    if(btn.dataset.action==='act')toggleMem(btn.dataset.id,'active');
+    if(btn.dataset.action==='deact')toggleMem(btn.dataset.id,'inactive');
+    if(btn.dataset.action==='delmem')delMem(btn.dataset.id);
+  };
+}
+function filterMem(){const q=document.getElementById('msrch').value.toLowerCase();renderMem(allMem.filter(m=>m.email.toLowerCase().includes(q)));}
+async function toggleMem(id,status){await sb.from('memberships').update({status,updated_at:new Date().toISOString()}).eq('id',id);toast(status==='active'?'Ativado!':'Desativado.');loadMem();}
+async function delMem(id){if(!confirm('Excluir membro?'))return;await sb.from('memberships').delete().eq('id',id);toast('Excluído.');loadMem();}
+function openAddMemModal(){
+  document.getElementById('nm-email').value='';document.getElementById('nm-plan').value='premium';document.getElementById('nm-exp').value='';
+  openModal('m-mem');
+}
+async function addMem(){
+  const email=document.getElementById('nm-email').value.trim().toLowerCase();
+  const plan=document.getElementById('nm-plan').value.trim()||'premium';
+  const exp=document.getElementById('nm-exp').value;
+  if(!email){toast('Digite o email.','err');return;}
+  const {error}=await sb.from('memberships').upsert({email,plan,status:'active',source:'manual',expires_at:exp||null,updated_at:new Date().toISOString()},{onConflict:'email'});
+  if(error){toast('Erro: '+error.message,'err');return;}
+  toast('✓ Membro adicionado!');closeModal('m-mem');loadMem();
+}
+
+// CONFIG
+async function loadCfg(){
+  const {data}=await sb.from('site_config').select('*');
+  if(!data)return;
+  const cfg=Object.fromEntries(data.map(r=>[r.key,r.value]));
+  document.getElementById('cfg-name').value=cfg.site_name||'';
+  document.getElementById('cfg-sub').value=cfg.site_subtitle||'';
+  document.getElementById('cfg-welcome').value=cfg.welcome_message||'';
+  document.getElementById('cfg-email').value=cfg.support_email||'';
+  document.getElementById('cfg-community').value=cfg.community_url||'';
+  document.getElementById('cfg-sales').value=cfg.sales_url||'';
+}
+async function saveConfig(){
+  const updates=[
+    {key:'site_name',value:document.getElementById('cfg-name').value},
+    {key:'site_subtitle',value:document.getElementById('cfg-sub').value},
+    {key:'welcome_message',value:document.getElementById('cfg-welcome').value},
+    {key:'support_email',value:document.getElementById('cfg-email').value},
+    {key:'community_url',value:document.getElementById('cfg-community').value},
+    {key:'sales_url',value:document.getElementById('cfg-sales').value},
+  ];
+  const {error}=await sb.from('site_config').upsert(updates,{onConflict:'key'});
+  if(error){toast('Erro: '+error.message,'err');return;}
+  toast('✓ Configurações salvas!');
+}
+</script>
+</body>
+</html>
